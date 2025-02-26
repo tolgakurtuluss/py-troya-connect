@@ -2,6 +2,12 @@ import win32com.client
 import pythoncom
 import time
 from typing import Optional, Dict, Any
+from enum import Enum
+
+class TerminalType(Enum):
+    EXTRA = "EXTRA.System"
+    HIS = "MSHISServer.Session"
+    NETMANAGE = "NetManage.Connection.1"
 
 class ExtraTerminalError(Exception):
     """Base exception class for ExtraTerminal errors."""
@@ -48,39 +54,53 @@ class ExtraTerminal:
         session_name (str): Name of the Extra session to connect to.
     """
     
-    def __init__(self, session_name: str):
+    def __init__(self, session_name: str, terminal_type: TerminalType = TerminalType.EXTRA):
         pythoncom.CoInitialize()
         self.timeout = 10000
         self.counter = 0
+        self.terminal_type = terminal_type
+        
         try:
-            self.extra_app = win32com.client.Dispatch("EXTRA.System")
-            print(f"Successfully created EXTRA.System object: {self.extra_app}")
+            if terminal_type == TerminalType.EXTRA:
+                self.extra_app = win32com.client.Dispatch(TerminalType.EXTRA.value)
+            elif terminal_type == TerminalType.HIS:
+                self.extra_app = win32com.client.Dispatch(TerminalType.HIS.value)
+            elif terminal_type == TerminalType.NETMANAGE:
+                self.extra_app = win32com.client.Dispatch(TerminalType.NETMANAGE.value)
             
-            # List available sessions first
-            sessions = self.list_available_sessions()
-            print(f"Available sessions: {sessions}")
+            print(f"Successfully created {terminal_type.value} object: {self.extra_app}")
             
-            if not sessions:
-                raise SessionError("No sessions available")
-            
-            # Try to get session by index if session_name is numeric
-            try:
-                session_index = int(session_name)
-                self.session = self.extra_app.Sessions(session_index)
-            except ValueError:
-                # If session_name is not numeric, try to find by name
-                found = False
-                for i in range(1, self.extra_app.Sessions.Count + 1):
-                    session = self.extra_app.Sessions(i)
-                    if session.Name == session_name:
-                        self.session = session
-                        found = True
-                        break
-                if not found:
-                    raise SessionError(
-                        f"Session not found",
-                        {"name": session_name, "available": [s['name'] for s in sessions]}
-                    )
+            # Modified session handling for different terminal types
+            if terminal_type == TerminalType.EXTRA:
+                # List available sessions first
+                sessions = self.list_available_sessions()
+                print(f"Available sessions: {sessions}")
+                
+                if not sessions:
+                    raise SessionError("No sessions available")
+                
+                # Try to get session by index if session_name is numeric
+                try:
+                    session_index = int(session_name)
+                    self.session = self.extra_app.Sessions(session_index)
+                except ValueError:
+                    # If session_name is not numeric, try to find by name
+                    found = False
+                    for i in range(1, self.extra_app.Sessions.Count + 1):
+                        session = self.extra_app.Sessions(i)
+                        if session.Name == session_name:
+                            self.session = session
+                            found = True
+                            break
+                    if not found:
+                        raise SessionError(
+                            f"Session not found",
+                            {"name": session_name, "available": [s['name'] for s in sessions]}
+                        )
+            elif terminal_type == TerminalType.HIS:
+                self.session = self.extra_app.OpenSession(session_name)
+            elif terminal_type == TerminalType.NETMANAGE:
+                self.session = self.extra_app.Sessions.Item(session_name)
             
             print(f"Successfully connected to session: {self.session.Name}")
             self.screen = self.session.Screen
@@ -89,7 +109,7 @@ class ExtraTerminal:
         except pythoncom.com_error as e:
             hr, msg, exc, arg = e.args
             raise ConnectionError(
-                "Failed to initialize terminal",
+                f"Failed to initialize {terminal_type.value}",
                 {"hr": hr, "msg": msg, "source": exc, "arg": arg}
             )
         except Exception as e:
@@ -128,10 +148,17 @@ class ExtraTerminal:
             return f"Failed to get system status: {self._format_com_error(e)}"
 
     def connect(self):
-        """Connect to the Extra terminal session."""
+        """Connect to the terminal session with appropriate protocol."""
         if not self.connected:
             try:
-                self.session.Connect()
+                if self.terminal_type == TerminalType.HIS:
+                    self.session.Connect()
+                    self.session.WaitForConnect(30)  # 30 second timeout
+                elif self.terminal_type == TerminalType.NETMANAGE:
+                    self.session.Connect()
+                    self.session.WaitReady(30000)  # 30 second timeout
+                else:
+                    self.session.Connect()
                 self.connected = True
             except pythoncom.com_error as e:
                 raise ConnectionError(f"Connection failed: {e}") from e
@@ -181,21 +208,35 @@ class ExtraTerminal:
                 {"keys": keys, "hr": hr, "msg": msg}
             )
  
-    def read_screen(self):
-        """Read the entire terminal screen using GetStringEx"""
+    def read_screen(self, strip_whitespace: bool = False):
+        """
+        Read the entire terminal screen using GetStringEx
+        
+        Args:
+            strip_whitespace (bool): If True, returns list of stripped lines. If False, returns raw screen content.
+                                   Defaults to True.
+        
+        Returns:
+            Union[List[str], str]: List of lines if strip_whitespace is True, raw string if False
+        """
         try:
             # Wait for terminal to be ready
             if not self.wait_for_ready():
                 raise TerminalBusyError("Terminal not ready for reading")
                 
             # Use 24x80 as default terminal size
-            response = self.screen.GetStringEx(0, 0, 24, 80, 120, 0, 0, 0)
-            response = response[:1920]  # 24 rows * 80 columns
-            screen_text = []
-            for i in range(0, len(response), 80):
-                line = response[i:i+80].rstrip()
-                screen_text.append(line)
-            return screen_text
+            response = self.screen.GetStringEx(0, 0, 32, 80, 120, 0, 0, 0)
+            response = response[:2560]  # 32 rows * 80 columns
+            
+            if strip_whitespace:
+                screen_text = []
+                for i in range(0, len(response), 80):
+                    line = response[i:i+80].rstrip()
+                    screen_text.append(line)
+                return screen_text
+            else:
+                return response
+                
         except Exception as e:
             raise CommandError(f"Read screen failed: {str(e)}") from e
  
@@ -301,15 +342,40 @@ class ExtraTerminal:
         except Exception as e:
             print(f"CoUninitialize warning: {str(e)}")
  
+    @staticmethod
+    def detect_terminal_type():
+        """Detect available terminal emulation software"""
+        terminal_types = []
+        
+        for terminal_type in TerminalType:
+            try:
+                win32com.client.Dispatch(terminal_type.value)
+                terminal_types.append(terminal_type)
+            except:
+                continue
+        
+        return terminal_types
+
 # Example Usage
 if __name__ == "__main__":
     try:
-        print("Attempting to initialize Extra Terminal...")
+        print("Detecting available terminal types...")
+        available_types = ExtraTerminal.detect_terminal_type()
         
-        # Get session selection from user
+        if not available_types:
+            print("No supported terminal emulation software found!")
+            exit(1)
+            
+        print("\nAvailable terminal types:")
+        for i, t_type in enumerate(available_types, 1):
+            print(f"{i}. {t_type.value}")
+            
+        type_choice = int(input("\nSelect terminal type (number): ")) - 1
+        selected_type = available_types[type_choice]
+        
         session_choice = ExtraTerminal.select_session()
         
-        with ExtraTerminal(session_choice) as term:
+        with ExtraTerminal(session_choice, selected_type) as term:
             print("\nSystem Status:", term.check_system_status())
             
             while True:
