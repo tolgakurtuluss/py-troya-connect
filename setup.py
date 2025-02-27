@@ -1,5 +1,5 @@
 import os
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages # type: ignore
 
 # Read the contents of README file
 with open(os.path.join(os.path.dirname(__file__), 'README.md'), encoding='utf-8') as f:
@@ -19,7 +19,7 @@ dev_requires = [
 
 setup(
     name="py-troya-connect",
-    version="0.1.28",
+    version="0.1.3152",
     packages=find_packages(exclude=['tests*', 'docs*']),
     
     # Dependencies
@@ -38,7 +38,7 @@ setup(
     # Metadata
     author="Tolga Kurtulus",
     author_email="tolgakurtulus95@gmail.com",
-    description="A Python interface for Attachmate Extra Terminal sessions",
+    description="A Python interface for Attachmate Extra! X-treme",
     long_description=long_description,
     long_description_content_type="text/markdown",
     keywords="terminal, attachmate, extra, automation, thy, turkish airlines",
@@ -58,9 +58,6 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: System :: Hardware :: Hardware Drivers",
         "Topic :: System :: Networking",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
@@ -70,7 +67,7 @@ setup(
     ],
     
     # Package config
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     zip_safe=False,
     include_package_data=True,
     
