@@ -25,6 +25,36 @@ print(screen_content)
 terminal.disconnect()
 ```
 
+## Interactive Demos
+
+Try out these interactive examples to get started:
+
+<div align="center">
+
+[![Python Script](https://img.shields.io/badge/Python-Demo-blue?logo=python&style=for-the-badge)](https://github.com/tolgakurtuluss/py-troya-connect/tree/main/demo/interactive_terminal.py)
+[![Jupyter Notebook](https://img.shields.io/badge/Jupyter-Demo-orange?logo=jupyter&style=for-the-badge)](https://github.com/tolgakurtuluss/py-troya-connect/tree/main/demo/interactive_terminal.ipynb)
+
+</div>
+
+The demos include:
+- Interactive session selection
+- Screen content reading
+- Command sending
+- System diagnostics
+- Error handling examples
+
+### Running the Demos
+
+**Python Script:**
+```bash
+python demo/interactive_terminal.py
+```
+
+**Jupyter Notebook:**
+```bash
+jupyter notebook demo/interactive_terminal.ipynb
+```
+
 ## Key Features
 
 ### Session Management
@@ -116,6 +146,7 @@ print(f"Available Sessions: {', '.join(status['Available Sessions'])}")
 ```python
 # Built-in interactive mode
 if __name__ == "__main__":
+
     session = ExtraTerminal.select_session()
     with ExtraTerminal(session) as terminal:
         while True:
