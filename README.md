@@ -3,7 +3,7 @@
 'py-troya-connect' is a Python framework for interacting with Attachmate Extra! X-treme based Troya terminal sessions.
 
 ## Installation
-
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/py-troya-connect?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/py-troya-connect)
 ```bash
 pip install py-troya-connect
 ```
@@ -167,3 +167,4 @@ if __name__ == "__main__":
 ## License
 
 MIT License
+
