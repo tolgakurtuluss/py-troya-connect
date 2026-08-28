@@ -1,9 +1,19 @@
-# py-troya-connect
 
+# ▶️ This project is being developed under [py-extra-terminal](https://github.com/tolgakurtuluss/py-extra-terminal) repository!
+
+## py-troya-connect - (deprecated and archived) [![PyPI Downloads](https://static.pepy.tech/personalized-badge/py-troya-connect?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/py-troya-connect)
+
+#
+> ⚠️ DISCLAIMER : This project is no longer supported and archived due to copyright infringements of Troya Terminal and their related subsidiaries.
+#
+
+## About
 'py-troya-connect' is a Python framework for interacting with Attachmate Extra! X-treme based Troya terminal sessions.
 
+
 ## Installation
-[![PyPI Downloads](https://static.pepy.tech/personalized-badge/py-troya-connect?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/py-troya-connect)
+
+
 ```bash
 pip install py-troya-connect
 ```
